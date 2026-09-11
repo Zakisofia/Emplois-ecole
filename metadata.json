@@ -1,0 +1,6 @@
+{
+  "name": "ChronoPlan Pro",
+  "description": "Système avancé de gestion d'emplois du temps avec détection de conflits, gestion de masse horaire et planification intelligente.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
