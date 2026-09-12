@@ -1,1 +1,52 @@
 @import "tailwindcss";
+
+@media print {
+  .no-print, 
+  header, 
+  aside, 
+  nav, 
+  button,
+  .flex.gap-3,
+  .flex.justify-between.items-center.mb-8 {
+    display: none !important;
+  }
+
+  body, html {
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  main {
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  .p-8 {
+    padding: 0 !important;
+  }
+
+  /* Ensure the table is visible and formatted for print */
+  .bg-white {
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  table {
+    width: 100% !important;
+    table-layout: fixed !important;
+    border: 1px solid #e2e8f0 !important;
+  }
+
+  th, td {
+    border: 1px solid #e2e8f0 !important;
+    word-wrap: break-word !important;
+  }
+
+  .overflow-x-auto {
+    overflow: visible !important;
+  }
+}

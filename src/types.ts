@@ -46,9 +46,12 @@ export interface ProfessorAssignment {
   durationPerSession: number; // in hours, e.g., 1.5 or 3.0
 }
 
+export type ProfessorType = 'Permanent' | 'Vacataire';
+
 export interface Professor {
   id: string;
   name: string;
+  type: ProfessorType;
   specialty: string;
   subjects: string[];
   targetWeeklyHours: number;

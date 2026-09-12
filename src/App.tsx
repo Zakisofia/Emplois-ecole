@@ -12,10 +12,11 @@ import {
   Trash2,
   Copy,
   ChevronRight,
-  Filter
+  Filter,
+  LayoutGrid
 } from 'lucide-react';
 import { useAppState } from './hooks/useAppState';
-import { DAYS, SLOTS, Room, ClassGroup, Professor, ProfessorAssignment, ScheduleEntry, RoomType, Conflict, POLES, YEARS, VACATION_TYPES, StudyYear, PoleType, VacationType, FILIERES_BY_POLE, Week, WeekStatus } from './types';
+import { DAYS, SLOTS, Room, ClassGroup, Professor, ProfessorType, ProfessorAssignment, ScheduleEntry, RoomType, Conflict, POLES, YEARS, VACATION_TYPES, StudyYear, PoleType, VacationType, FILIERES_BY_POLE, Week, WeekStatus } from './types';
 
 // Sub-components will be defined here or in separate files
 // For brevity and to ensure a complete working app in one go, I'll put them in logical sections below.
@@ -27,7 +28,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-50 flex text-slate-900 font-sans">
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-slate-200 flex flex-col sticky top-0 h-screen shadow-sm z-10">
+      <aside className="w-64 bg-white border-r border-slate-200 flex flex-col sticky top-0 h-screen shadow-sm z-10 no-print">
         <div className="p-6 border-b border-slate-100 flex items-center gap-3">
           <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-100">
             <Calendar size={24} />
@@ -60,8 +61,8 @@ export default function App() {
           <NavItem 
             active={activeTab === 'settings'} 
             onClick={() => setActiveTab('settings')}
-            icon={<Settings size={20} />} 
-            label="Paramètres" 
+            icon={<LayoutGrid size={20} />} 
+            label="Salles & Classes" 
           />
           <NavItem 
             active={activeTab === 'conflicts'} 
@@ -87,7 +88,7 @@ export default function App() {
 
       {/* Main Content */}
       <main className="flex-1 overflow-auto">
-        <header className="bg-white border-b border-slate-200 px-8 py-4 flex justify-between items-center sticky top-0 z-20 shadow-sm">
+        <header className="bg-white border-b border-slate-200 px-8 py-4 flex justify-between items-center sticky top-0 z-20 shadow-sm no-print">
           <div>
             <h2 className="text-xl font-bold text-slate-800">
               {activeTab === 'schedule' && "Grille de Planification"}
@@ -344,9 +345,9 @@ function ScheduleView({ state }: { state: any }) {
     : 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 print-container">
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6 no-print">
           <div className="flex flex-wrap gap-6 items-center">
             <div className="bg-slate-100 p-1 rounded-xl flex">
               <button 
@@ -652,7 +653,7 @@ function EditModal({ slot, state, onClose, onSave, currentEntry, classId }: any)
 function ProfessorView({ state }: { state: any }) {
   const [isAdding, setIsAdding] = useState(false);
   const [newProf, setNewProf] = useState<Partial<Professor>>({
-    name: '', specialty: '', targetWeeklyHours: 15, unavailabilities: [], subjects: [], assignments: []
+    name: '', type: 'Permanent', specialty: '', targetWeeklyHours: 15, unavailabilities: [], subjects: [], assignments: []
   });
   const [newSubject, setNewSubject] = useState('');
   
@@ -668,7 +669,7 @@ function ProfessorView({ state }: { state: any }) {
   const handleAdd = () => {
     if (newProf.name && newProf.specialty) {
       state.setProfessors([...state.professors, { ...newProf, id: Math.random().toString(36).substr(2, 9) }]);
-      setNewProf({ name: '', specialty: '', targetWeeklyHours: 15, unavailabilities: [], subjects: [], assignments: [] });
+      setNewProf({ name: '', type: 'Permanent', specialty: '', targetWeeklyHours: 15, unavailabilities: [], subjects: [], assignments: [] });
       setUnavailDay(DAYS[0]);
       setUnavailSlot('all');
       setIsAdding(false);
@@ -767,7 +768,12 @@ function ProfessorView({ state }: { state: any }) {
                 {p.name.split(' ').map(n => n[0]).join('')}
               </div>
               <h4 className="text-lg font-black text-slate-800">{p.name}</h4>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">{p.specialty}</p>
+              <div className="flex items-center gap-2 mb-4">
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{p.specialty}</p>
+                <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter ${p.type === 'Permanent' ? 'bg-emerald-50 text-emerald-600' : 'bg-orange-50 text-orange-600'}`}>
+                  {p.type || 'Permanent'}
+                </span>
+              </div>
               
               <div className="space-y-4">
                 <div>
@@ -832,6 +838,17 @@ function ProfessorView({ state }: { state: any }) {
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold focus:ring-2 focus:ring-indigo-500 outline-none"
                   onChange={(e) => setNewProf({ ...newProf, specialty: e.target.value })}
                 />
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Type de Professeur</label>
+                  <select 
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold focus:ring-2 focus:ring-indigo-500 outline-none"
+                    value={newProf.type}
+                    onChange={(e) => setNewProf({ ...newProf, type: e.target.value as ProfessorType })}
+                  >
+                    <option value="Permanent">Permanent</option>
+                    <option value="Vacataire">Vacataire</option>
+                  </select>
+                </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Masse horaire max (hebdo)</label>
                   <input 
@@ -1018,6 +1035,37 @@ function SettingsView({ state }: { state: any }) {
   const [newClass, setNewClass] = useState<Partial<ClassGroup>>({ label: '', studentCount: 0, year: '1ère année', pole: 'Informatique & IA', vacationType: 'Jour' });
   const [newRoom, setNewRoom] = useState<Partial<Room>>({ label: '', capacity: 0, type: 'Normal', fixedSlots: [] });
 
+  const resetRoomForm = () => {
+    setNewRoom({ label: '', capacity: 0, type: 'Normal', fixedSlots: [] });
+    setIsAddingRoom(false);
+    // Clear DOM inputs for fixed slots if they exist
+    const subjectInput = document.getElementById('room-fixed-subject') as HTMLInputElement;
+    if (subjectInput) subjectInput.value = '';
+    const daySelect = document.getElementById('room-fixed-day') as HTMLSelectElement;
+    if (daySelect) daySelect.value = DAYS[0];
+    const slotSelect = document.getElementById('room-fixed-slot') as HTMLSelectElement;
+    if (slotSelect) slotSelect.value = '0';
+    const classSelect = document.getElementById('room-fixed-classes') as HTMLSelectElement;
+    if (classSelect) {
+      Array.from(classSelect.options).forEach(opt => opt.selected = false);
+    }
+  };
+
+  const resetClassForm = () => {
+    setNewClass({ label: '', studentCount: 0, year: '1ère année', pole: 'Informatique & IA', vacationType: 'Jour' });
+    setIsAddingClass(false);
+  };
+
+  const editRoom = (room: Room) => {
+    setNewRoom({ ...room });
+    setIsAddingRoom(true);
+  };
+
+  const editClass = (cls: ClassGroup) => {
+    setNewClass({ ...cls });
+    setIsAddingClass(true);
+  };
+
   return (
     <div className="space-y-8">
       <div className="flex gap-4 border-b border-slate-200 pb-px">
@@ -1040,7 +1088,11 @@ function SettingsView({ state }: { state: any }) {
       {activeSubTab === 'rooms' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {state.rooms.map((r: Room) => (
-            <div key={r.id} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-3 group transition-all hover:shadow-md">
+            <div 
+              key={r.id} 
+              onClick={() => editRoom(r)}
+              className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-3 group transition-all hover:shadow-md cursor-pointer"
+            >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="p-3 bg-slate-50 text-slate-400 rounded-xl group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-all">
@@ -1051,7 +1103,13 @@ function SettingsView({ state }: { state: any }) {
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{r.type} • {r.capacity} Places</p>
                   </div>
                 </div>
-                <button onClick={() => state.setRooms(state.rooms.filter((x: Room) => x.id !== r.id))} className="text-red-400 p-2 hover:bg-red-50 rounded-lg transition-all">
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    state.setRooms(state.rooms.filter((x: Room) => x.id !== r.id));
+                  }} 
+                  className="text-red-400 p-2 hover:bg-red-50 rounded-lg transition-all"
+                >
                   <Trash2 size={16} />
                 </button>
               </div>
@@ -1082,7 +1140,11 @@ function SettingsView({ state }: { state: any }) {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {state.classes.map((c: ClassGroup) => (
-            <div key={c.id} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-4 group">
+            <div 
+              key={c.id} 
+              onClick={() => editClass(c)}
+              className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-4 group cursor-pointer hover:shadow-md transition-all"
+            >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="p-3 bg-slate-50 text-slate-400 rounded-xl group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-all">
@@ -1093,7 +1155,13 @@ function SettingsView({ state }: { state: any }) {
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{c.studentCount} Étudiants</p>
                   </div>
                 </div>
-                <button onClick={() => state.setClasses(state.classes.filter((x: ClassGroup) => x.id !== c.id))} className="opacity-0 group-hover:opacity-100 text-red-400 p-2 hover:bg-red-50 rounded-lg transition-all">
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    state.setClasses(state.classes.filter((x: ClassGroup) => x.id !== c.id));
+                  }} 
+                  className="opacity-0 group-hover:opacity-100 text-red-400 p-2 hover:bg-red-50 rounded-lg transition-all"
+                >
                   <Trash2 size={16} />
                 </button>
               </div>
@@ -1118,21 +1186,24 @@ function SettingsView({ state }: { state: any }) {
       {isAddingRoom && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-6">
           <div className="bg-white rounded-3xl w-full max-w-md p-8 shadow-2xl">
-            <h3 className="text-xl font-black text-slate-800 mb-6">Nouvelle Salle</h3>
+            <h3 className="text-xl font-black text-slate-800 mb-6">{newRoom.id ? 'Modifier la Salle' : 'Nouvelle Salle'}</h3>
             <div className="space-y-4">
               <input 
                 placeholder="Nom (ex: Salle 2)"
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold outline-none"
+                value={newRoom.label}
                 onChange={(e) => setNewRoom({ ...newRoom, label: e.target.value })}
               />
               <input 
                 type="number"
                 placeholder="Capacité"
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold outline-none"
+                value={newRoom.capacity || ''}
                 onChange={(e) => setNewRoom({ ...newRoom, capacity: parseInt(e.target.value) || 0 })}
               />
               <select 
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold outline-none"
+                value={newRoom.type}
                 onChange={(e) => setNewRoom({ ...newRoom, type: e.target.value as RoomType })}
               >
                 <option value="Normal">Normal</option>
@@ -1219,11 +1290,19 @@ function SettingsView({ state }: { state: any }) {
               </div>
             </div>
             <div className="flex gap-4 mt-8">
-              <button onClick={() => setIsAddingRoom(false)} className="flex-1 py-3 font-bold text-slate-500">Annuler</button>
+              <button onClick={resetRoomForm} className="flex-1 py-3 font-bold text-slate-500 hover:bg-slate-50 rounded-xl transition-all">Annuler</button>
               <button onClick={() => {
-                if(newRoom.label) state.setRooms([...state.rooms, { ...newRoom, id: Date.now().toString() }]);
-                setIsAddingRoom(false);
-              }} className="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-bold">Ajouter</button>
+                if(newRoom.label) {
+                  if (newRoom.id) {
+                    state.setRooms(state.rooms.map((r: Room) => r.id === newRoom.id ? newRoom : r));
+                  } else {
+                    state.setRooms([...state.rooms, { ...newRoom, id: Date.now().toString() }]);
+                  }
+                }
+                resetRoomForm();
+              }} className="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all">
+                {newRoom.id ? 'Enregistrer' : 'Ajouter'}
+              </button>
             </div>
           </div>
         </div>
@@ -1232,7 +1311,7 @@ function SettingsView({ state }: { state: any }) {
       {isAddingClass && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-6">
           <div className="bg-white rounded-3xl w-full max-w-md p-8 shadow-2xl">
-            <h3 className="text-xl font-black text-slate-800 mb-6">Nouvelle Classe</h3>
+            <h3 className="text-xl font-black text-slate-800 mb-6">{newClass.id ? 'Modifier la Classe' : 'Nouvelle Classe'}</h3>
             <div className="space-y-4 overflow-y-auto max-h-[70vh] pr-2">
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Libellé</label>
@@ -1283,6 +1362,7 @@ function SettingsView({ state }: { state: any }) {
                 type="number"
                 placeholder="Effectif (étudiants)"
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold outline-none"
+                value={newClass.studentCount || ''}
                 onChange={(e) => setNewClass({ ...newClass, studentCount: parseInt(e.target.value) || 0 })}
               />
               
@@ -1300,6 +1380,7 @@ function SettingsView({ state }: { state: any }) {
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Vacation</label>
                 <select 
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold outline-none"
+                  value={newClass.vacationType}
                   onChange={(e) => setNewClass({ ...newClass, vacationType: e.target.value as VacationType })}
                 >
                   {VACATION_TYPES.map(v => <option key={v} value={v}>{v}</option>)}
@@ -1307,13 +1388,19 @@ function SettingsView({ state }: { state: any }) {
               </div>
             </div>
             <div className="flex gap-4 mt-8">
-              <button onClick={() => setIsAddingClass(false)} className="flex-1 py-3 font-bold text-slate-500 hover:bg-slate-50 rounded-xl transition-all">Annuler</button>
+              <button onClick={resetClassForm} className="flex-1 py-3 font-bold text-slate-500 hover:bg-slate-50 rounded-xl transition-all">Annuler</button>
               <button onClick={() => {
                 if(newClass.label && newClass.pole) {
-                  state.setClasses([...state.classes, { ...newClass, id: Date.now().toString() }]);
-                  setIsAddingClass(false);
+                  if (newClass.id) {
+                    state.setClasses(state.classes.map((c: ClassGroup) => c.id === newClass.id ? newClass : c));
+                  } else {
+                    state.setClasses([...state.classes, { ...newClass, id: Date.now().toString() }]);
+                  }
+                  resetClassForm();
                 }
-              }} className="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all">Ajouter</button>
+              }} className="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all">
+                {newClass.id ? 'Enregistrer' : 'Ajouter'}
+              </button>
             </div>
           </div>
         </div>
